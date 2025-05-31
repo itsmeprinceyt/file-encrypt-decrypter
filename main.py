@@ -34,11 +34,16 @@ def decrypt_file(input_file: str, output_file: str, password: str):
 if __name__ == "__main__":
     action = sys.argv[1]
     input_path = sys.argv[2]
-    password = getpass("Handshake: ")
 
     if action == "encrypt":
+        password = getpass("Handshake: ")
+        confirm_password = getpass("Confirm handshake: ")
+        if password != confirm_password:
+            print("Handshake not completed ... going far away!")
+            sys.exit(1)
         encrypt_file(input_path, input_path + ".prince", password)
     elif action == "decrypt":
+        password = getpass("Handshake: ")
         decrypt_file(input_path, input_path.replace(".prince", ""), password)
     else:
         print("nuh uh")
