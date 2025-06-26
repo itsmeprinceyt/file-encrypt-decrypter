@@ -3,28 +3,24 @@ const fs = require('fs');
 const readlineSync = require('readline-sync');
 const path = require('path');
 
-// Derive 32-byte key from password using SHA-256
 function deriveKey(password) {
     return crypto.createHash('sha256').update(password).digest();
 }
 
-// Encrypt file using AES-256-GCM
 function encryptFile(inputFile, outputFile, password) {
     const key = deriveKey(password);
-    const iv = crypto.randomBytes(12); // GCM recommends 12 bytes IV
+    const iv = crypto.randomBytes(12);
     const cipher = crypto.createCipheriv('aes-256-gcm', key, iv);
 
     const data = fs.readFileSync(inputFile);
     const encrypted = Buffer.concat([cipher.update(data), cipher.final()]);
     const authTag = cipher.getAuthTag();
 
-    // Save: IV + authTag + encryptedData
     const result = Buffer.concat([iv, authTag, encrypted]);
     fs.writeFileSync(outputFile, result);
     console.log(`✅ Handshake done ${outputFile}`);
 }
 
-// Decrypt file
 function decryptFile(inputFile, outputFile, password) {
     const key = deriveKey(password);
     const fileData = fs.readFileSync(inputFile);
@@ -45,13 +41,12 @@ function decryptFile(inputFile, outputFile, password) {
     }
 }
 
-// Main
 const args = process.argv.slice(2);
 const action = args[0];
 const inputPath = args[1];
 
 if (!action || !inputPath) {
-    console.log("Usage: node encryptor.js <encrypt|decrypt> <file>");
+    console.log("Usage: node main.js <encrypt|decrypt> <file with extension🤡>");
     process.exit(1);
 }
 
