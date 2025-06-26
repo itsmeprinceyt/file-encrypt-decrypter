@@ -1,0 +1,24 @@
+{
+  "name": "file-encrypt-decrypter",
+  "version": "1.0.0",
+  "description": "This project is a simple command-line tool for encrypting and decrypting files using a symmetric key derived from a user-provided password. It leverages the `cryptography` library's Fernet implementation for secure encryption.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/itsmeprinceyt/file-encrypt-decrypter.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/itsmeprinceyt/file-encrypt-decrypter/issues"
+  },
+  "homepage": "https://github.com/itsmeprinceyt/file-encrypt-decrypter#readme",
+  "dependencies": {
+    "readline-sync": "^1.4.10"
+  }
+}
