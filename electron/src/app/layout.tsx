@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
 import { Suspense } from "react";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import "./globals.css";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import Loader from "./(components)/Loader";
 
 export const metadata: Metadata = {
   title: "Electron + NextJS + Tailwind",
@@ -26,9 +18,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`antialiased`}
       >
-        <Suspense fallback={<div className="p-4">Loading...</div>}>
+        <Suspense fallback={<Loader/>}>
           {children}
         </Suspense>
       </body>

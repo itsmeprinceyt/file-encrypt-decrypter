@@ -1,14 +1,19 @@
 {
+  "name": "electron-next-tailwind-template",
+  "version": "1.0.0",
+  "description": "A modern template combining Electron with Next.js (App Router), styled using TailwindCSS and built with TypeScript. Ideal for creating cross-platform desktop applications using web technologies.",
   "main": "electron/dist/main.js",
   "scripts": {
     "dev": "next dev",
-    "build:next": "next build && next export",
-    "build:electron": "tsc -p electron/tsconfig.electron.json",
+    "build:next": "next build",
+    "move:out": "node move-out.js",
+    "build:electron": "tsc -p electron/tsconfig.electron.json && node move-assets.js",
     "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron electron/dist/main.js\"",
-    "build:app": "npm run build:next && npm run build:electron && electron-builder"
+    "build:app": "npm run build:next && npm run move:out && npm run build:electron && electron-builder"
   },
   "build": {
-    "appId": "com.example.myapp",
+    "appId": "com.yourcompany.yourapp",
+    "productName": "PrinceEncryptor",
     "files": [
       "electron/dist/**/*",
       "out/**/*",
@@ -18,7 +23,33 @@
       "buildResources": "assets"
     },
     "win": {
-      "target": "nsis"
+      "target": [
+        "portable",
+        "nsis"
+      ],
+      "icon": "assets/icon.ico"
     }
-  }
+  },
+  "dependencies": {
+    "next": "^15.3.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4.1.11",
+    "@types/react": "19.1.8",
+    "autoprefixer": "^10.4.21",
+    "concurrently": "^8.2.0",
+    "cross-env": "^7.0.3",
+    "electron": "^29.0.0",
+    "electron-builder": "^24.6.3",
+    "fs-extra": "^11.3.0",
+    "postcss": "^8.5.6",
+    "tailwindcss": "^4.1.11",
+    "typescript": "^5.4.5",
+    "wait-on": "^7.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
 }

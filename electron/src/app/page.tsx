@@ -27,6 +27,8 @@ export default function Home() {
       setMessage("✅ Encrypted successfully!");
       setInputPath("");
       setOutputPath("");
+      setPassword("");
+      setConfirmPassword("");
       setMode("done");
     } catch (err: any) {
       alert(err.message || "Encryption failed.");
@@ -39,6 +41,8 @@ export default function Home() {
       setMessage("✅ Decrypted successfully!");
       setInputPath("");
       setOutputPath("");
+      setPassword("");
+      setConfirmPassword("");
       setMode("done");
     } catch {
       alert("Decryption failed.");
