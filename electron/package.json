@@ -1,0 +1,24 @@
+{
+  "main": "electron/dist/main.js",
+  "scripts": {
+    "dev": "next dev",
+    "build:next": "next build && next export",
+    "build:electron": "tsc -p electron/tsconfig.electron.json",
+    "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron electron/dist/main.js\"",
+    "build:app": "npm run build:next && npm run build:electron && electron-builder"
+  },
+  "build": {
+    "appId": "com.example.myapp",
+    "files": [
+      "electron/dist/**/*",
+      "out/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "assets"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}
