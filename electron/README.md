@@ -89,7 +89,7 @@ After building, your .exe or app installer will be available in the `dist/` root
 ## 🚀 Get Started for development
 
 ```bash
-npm/npx install # Installs all the necessary files 
+npm install # Installs all the necessary files 
 npm run build:electron # Run so that your electron is compiled into `dist` folder
 npm run dev:electron # Launch Electron pointing to frontend
 ```
