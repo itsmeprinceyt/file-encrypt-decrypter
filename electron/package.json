@@ -2,7 +2,7 @@
   "name": "file-encryptor",
   "productName": "File Encrypter Decrypter",
   "version": "1.0.0",
-  "description": "A modern template combining Electron with Next.js (App Router), styled using TailwindCSS and built with TypeScript. Ideal for creating cross-platform desktop applications using web technologies.",
+  "description": "Easily encrypt or decrypt files using AES-GCM algorithm for secure file sharing and storage. Made using electron.js by @itsmeprinceyt",
   "main": "electron/dist/main.js",
   "scripts": {
     "dev": "next dev",
