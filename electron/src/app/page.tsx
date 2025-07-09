@@ -1,95 +1,66 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import HomeScreen from "./(components)/Homescreen";
+import EncryptScreen from "./(components)/Encryptscreen";
+import DecryptScreen from "./(components)/Decryptscreen";
+import DoneScreen from "./(components)/Donescreen";
+import Side from "./(components)/Side";
+import { ScreenMode } from "../types/ScreenMode.type";
 
 export default function Home() {
-  const [mode, setMode] = useState<"home" | "encrypt" | "decrypt" | "done">("home");
-  const [inputPath, setInputPath] = useState("");
-  const [outputPath, setOutputPath] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [message, setMessage] = useState("");
+  const [mode, setMode] = useState<ScreenMode>("home");
+  const [inputPath, setInputPath] = useState<string>("");
+  const [outputPath, setOutputPath] = useState<string>("");
+  const [folderPath, setFolderPath] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const [confirmPassword, setConfirmPassword] = useState<string>("");
+  const [message, setMessage] = useState<string>("");
 
-  const handleBrowse = async () => {
-    const file = await window.electronAPI.selectFile();
-    if (file) setInputPath(file);
+  useEffect(() => {
+    window.electronAPI?.onShortcutNavigate?.((_event: any, newMode: ScreenMode) => {
+      setMode(newMode);
+    });
+  }, []);
+
+  const commonProps = {
+    inputPath,
+    setInputPath,
+    outputPath,
+    setOutputPath,
+    password,
+    setPassword,
+    confirmPassword,
+    setConfirmPassword,
+    folderPath,
+    setFolderPath,
+    setMode,
+    setMessage,
   };
 
-  const handleSaveAs = async () => {
-    const path = await window.electronAPI.saveFile(inputPath, mode);
-    if (path) setOutputPath(path);
-  };
-
-
-  const handleEncrypt = async () => {
-    try {
-      await window.electronAPI.encrypt(inputPath, outputPath, password, confirmPassword);
-      setMessage("✅ Encrypted successfully!");
-      setInputPath("");
-      setOutputPath("");
-      setPassword("");
-      setConfirmPassword("");
-      setMode("done");
-    } catch (err: any) {
-      alert(err.message || "Encryption failed.");
+  const renderScreen = () => {
+    switch (mode) {
+      case "home":
+        return <HomeScreen setMode={setMode} />;
+      case "encrypt":
+        return <EncryptScreen {...commonProps} />;
+      case "decrypt":
+        return <DecryptScreen {...commonProps} />;
+      case "done":
+        return <DoneScreen message={message} setMode={setMode} setoutputPath={setFolderPath} outputPath={folderPath} />;
+      default:
+        return null;
     }
   };
 
-  const handleDecrypt = async () => {
-    try {
-      await window.electronAPI.decrypt(inputPath, outputPath, password);
-      setMessage("✅ Decrypted successfully!");
-      setInputPath("");
-      setOutputPath("");
-      setPassword("");
-      setConfirmPassword("");
-      setMode("done");
-    } catch {
-      alert("Decryption failed.");
-    }
-  };
-
-  if (mode === "home") {
-    return (
-      <main className="p-6 space-y-4">
-        <h1 className="text-xl font-bold">🛡️ Prince's Encryptor</h1>
-        <button onClick={() => setMode("encrypt")} className="btn">Encrypt</button>
-        <button onClick={() => setMode("decrypt")} className="btn">Decrypt</button>
-      </main>
-    );
-  }
-
-  if (mode === "encrypt" || mode === "decrypt") {
-    return (
-      <main className="p-6 space-y-4">
-        <h2 className="text-lg font-bold">{mode === "encrypt" ? "Encrypt File" : "Decrypt File"}</h2>
-        <button onClick={handleBrowse} className="btn">Browse File</button>
-        <p>{inputPath}</p>
-        <button onClick={handleSaveAs} className="btn">Save As</button>
-        <p>{outputPath}</p>
-        <input type="password" placeholder="Password" className="input" value={password} onChange={e => setPassword(e.target.value)} />
-        {mode === "encrypt" && (
-          <input type="password" placeholder="Confirm Password" className="input" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
-        )}
-        <button
-          onClick={mode === "encrypt" ? handleEncrypt : handleDecrypt}
-          className="btn bg-green-600 text-white"
-        >
-          {mode === "encrypt" ? "Encrypt" : "Decrypt"}
-        </button>
-        <button onClick={() => setMode("home")} className="btn text-sm text-gray-500">← Back</button>
-      </main>
-    );
-  }
-
-  if (mode === "done") {
-    return (
-      <main className="p-6 space-y-4">
-        <p className="text-green-500 font-medium">{message}</p>
-        <button onClick={() => setMode("home")} className="btn">Back to Home</button>
-      </main>
-    );
-  }
-
-  return null;
+  return (
+    <div className="flex flex-col md:flex-row items-center justify-center min-h-screen">
+      <div className="w-full md:w-1/2 border-r p-4 min-h-screen flex items-center justify-center bg-gradient-to-t from-blue-900 to-blue-950">
+        <Side />
+      </div>
+      <div className="w-full md:w-1/2 p-4 min-h-screen flex items-center justify-center">
+        {renderScreen()}
+      </div>
+    </div>
+  );
 }

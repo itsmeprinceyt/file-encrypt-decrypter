@@ -22,13 +22,21 @@ export function decryptFile(inputFile: string, outputFile: string, password: str
     const key = deriveKey(password);
     const data = fs.readFileSync(inputFile);
 
+    if (data.length < 28) {
+        throw new Error("Invalid or corrupted file.");
+    }
+
     const iv = data.slice(0, 12);
     const authTag = data.slice(12, 28);
     const encrypted = data.slice(28);
 
     const decipher = crypto.createDecipheriv("aes-256-gcm", key, iv);
     decipher.setAuthTag(authTag);
-    const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
 
-    fs.writeFileSync(outputFile, decrypted);
+    try {
+        const decrypted = Buffer.concat([decipher.update(encrypted), decipher.final()]);
+        fs.writeFileSync(outputFile, decrypted);
+    } catch (err) {
+        throw new Error("Incorrect password.");
+    }
 }

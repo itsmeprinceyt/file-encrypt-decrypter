@@ -1,70 +1,121 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell, globalShortcut } from "electron";
 import path from "path";
 import { encryptFile, decryptFile } from "./cryptoHandler";
 
+let mainWindow: BrowserWindow | null = null;
+
 function createWindow() {
-    const win = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
         },
-        icon: path.join(__dirname, 'assets', 'logo-ico.ico'),
+        icon: path.join(__dirname, "assets", "logo.ico"),
     });
 
-    win.maximize();
-    
+    mainWindow.maximize();
     const startUrl = app.isPackaged
         ? path.join(__dirname, "out", "index.html")
         : "http://localhost:3000";
 
     if (app.isPackaged) {
-        win.loadFile(startUrl);
+        mainWindow.loadFile(startUrl);
     } else {
-        win.loadURL(startUrl);
+        mainWindow.loadURL(startUrl);
     }
+
+    const zoomStep = 0.1;
+    const webContents = mainWindow!.webContents;
+
+    webContents.on("before-input-event", (_, input) => {
+        if (input.control && input.type === "keyDown") {
+            let current = webContents.getZoomFactor();
+            if (input.key === "=" || input.key === "+") {
+                webContents.setZoomFactor(Math.min(current + zoomStep, 3));
+            }
+            if (input.key === "-") {
+                webContents.setZoomFactor(Math.max(current - zoomStep, 0.3));
+            }
+            if (input.key === "0") {
+                webContents.setZoomFactor(1.0);
+            }
+        }
+    });
 }
+
 
 const menuTemplate: Electron.MenuItemConstructorOptions[] = [
     {
-        label: "Open",
+        label: "App",
         submenu: [
             {
                 label: "Learn More",
                 click: () => {
-                    dialog.showMessageBox({
-                        type: "info",
-                        title: "About Prince's Encryptor",
-                        message: `🔐 Prince's File Encryptor v1.0`,
-                        detail:
-                            "Created by ItsMe Prince\nA secure AES-GCM based file encryptor built with Electron + Next.js.\n\nChoose a button below to explore more:",
-                        buttons: ["YouTube", "GitHub Profile", "GitHub Repo", "Close"],
-                        noLink: true,
-                    }).then((result) => {
-                        switch (result.response) {
-                            case 0:
-                                shell.openExternal("https://www.youtube.com/@itsmeprinceyt");
-                                break;
-                            case 1:
-                                shell.openExternal("https://github.com/itsmeprinceyt");
-                                break;
-                            case 2:
-                                shell.openExternal("https://github.com/itsmeprinceyt/file-encrypt-decrypter/tree/main/electron");
-                                break;
-                            default:
-                                break;
-                        }
-                    });
+                    dialog
+                        .showMessageBox({
+                            type: "info",
+                            title: "About",
+                            message: `🔐 File Encrypter Decrypter v1.0`,
+                            detail: `I wanted a secure way to protect my sensitive files like .env configs, so I built this tool using AES-256-GCM encryption — one of the live saving thing I made.\n\nAlso, this is the first software which I made so it may not be upto the mark but I tried my best.\n\nIf you'd like to check out my social profiles or repositories, feel free to use the buttons below. Stay safe, stay encrypted.`,
+                            buttons: ["YouTube", "GitHub Profile", "Repo", "Close"],
+                            noLink: true,
+                        })
+                        .then((res) => {
+                            const links = [
+                                "https://www.youtube.com/@itsmeprinceyt",
+                                "https://github.com/itsmeprinceyt",
+                                "https://github.com/itsmeprinceyt/file-encrypt-decrypter",
+                            ];
+                            if (res.response < 3) shell.openExternal(links[res.response]);
+                        });
+                },
+            },
+            {
+                label: "Shortcuts",
+                click: () => {
+                    dialog
+                        .showMessageBox({
+                            type: "info",
+                            title: "Shortcuts",
+                            message: `File Encrypter Decrypter - Keyboard Shortcuts`,
+                            detail: `Encrypt a file: Ctrl + E\nDecrypt a file: Ctrl + D\nHome: Ctrl + H`,
+                        });
                 },
             },
             { type: "separator" },
-            { label: "Reload", role: "reload" },
+            { role: "reload" },
             { type: "separator" },
-            { label: "Zoom In", role: "zoomIn" },
-            { label: "Zoom Out", role: "zoomOut" },
+            {
+                label: "Zoom In",
+                accelerator: "CmdOrCtrl+=",
+                click: () => {
+                    if (mainWindow) {
+                        const current = mainWindow.webContents.getZoomFactor();
+                        mainWindow.webContents.setZoomFactor(Math.min(current + 0.1, 3));
+                    }
+                },
+            },
+            {
+                label: "Zoom Out",
+                accelerator: "CmdOrCtrl+-",
+                click: () => {
+                    if (mainWindow) {
+                        const current = mainWindow.webContents.getZoomFactor();
+                        mainWindow.webContents.setZoomFactor(Math.max(current - 0.1, 0.3));
+                    }
+                },
+            },
+            {
+                label: "Reset Zoom",
+                accelerator: "CmdOrCtrl+0",
+                click: () => {
+                    if (mainWindow) {
+                        mainWindow.webContents.setZoomFactor(1.0);
+                    }
+                },
+            },
             { type: "separator" },
-            { label: "Minimize", role: "minimize" },
-            { label: "Toggle Fullscreen", role: "togglefullscreen" },
-            { type: "separator" },
-            { label: "Exit", role: "quit" },
+            { role: "togglefullscreen" },
+            { role: "quit" },
         ],
     },
 ];
@@ -74,15 +125,50 @@ app.whenReady().then(() => {
     createWindow();
     Menu.setApplicationMenu(Menu.buildFromTemplate(menuTemplate));
 
-
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    });
+
+    globalShortcut.register("CommandOrControl+E", () => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+            win.webContents.send("shortcut-navigate", "encrypt");
+        }
+    });
+    globalShortcut.register("CommandOrControl+D", () => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+            win.webContents.send("shortcut-navigate", "decrypt");
+        }
+    });
+    globalShortcut.register("CommandOrControl+H", () => {
+        const win = BrowserWindow.getAllWindows()[0];
+        if (win) {
+            win.webContents.send("shortcut-navigate", "home");
+        }
     });
 });
 
 app.on("window-all-closed", () => {
     if (process.platform !== "darwin") app.quit();
 });
+
+app.on("will-quit", () => {
+    globalShortcut.unregisterAll();
+});
+
+process.on("uncaughtException", (err) => {
+    console.error("Uncaught Exception:", err);
+});
+
+ipcMain.on("open-external", (_, url) => {
+    shell.openExternal(url);
+});
+
+ipcMain.on("show-item", (_, filePath) => {
+    shell.showItemInFolder(filePath);
+});
+
 
 ipcMain.handle("select-file", async () => {
     const result = await dialog.showOpenDialog({ properties: ["openFile"] });

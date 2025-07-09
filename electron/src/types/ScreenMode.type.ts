@@ -1,0 +1,1 @@
+export type ScreenMode = "home" | "encrypt" | "decrypt" | "done";
