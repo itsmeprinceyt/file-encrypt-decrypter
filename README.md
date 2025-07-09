@@ -4,11 +4,13 @@ This project is a simple command-line tool for encrypting and decrypting files u
 # `Purpose`
 As an active open-source developer, managing `.env` files securely is crucial for me. Storing these sensitive files solely on my local machine feels risky—what if my computer crashes or gets lost? To mitigate this risk, I created a simple Python script and same in node to encrypt my `.env` files. This allows me to safely push encrypted files to public repositories without worrying about exposing my secrets. I believe this is an effective and free solution to keep my environment variables secure while maintaining easy access and version control.
 
+Update: I created a `portable` & `setup` version using electron.js which u can install and use normally. This is the best way to use this software if you have no prior knowledge of programming languages.
+
 ## Features
 File Encryption: Securely encrypts files using a password.
 File Decryption: Decrypts previously encrypted files using the correct password.
 Password-Derived Key: Generates a strong encryption key from the password using SHA-256 hashing.
-## Python Usage
+## `Python Usage`
 ### Prerequisites
 Make sure you have Python installed and the necessary libraries. You can install the `cryptography` library using pip:
 
@@ -39,7 +41,7 @@ Again, you'll be prompted for your "Handshake" (password):
 ```bash
 Handshake:
 ```
-## Node Usage
+## `Node Usage`
 ### Prerequisites
 
 Make sure you have **Node.js** installed on your system. You also need to install the `readline-sync` package for handling password input.
@@ -76,3 +78,12 @@ Handshake: ********
 
 - Do not forget your password! If you lose it, you cannot decrypt the file.
 - If the password is correct, the original file will be restored by removing the `.prince` extension. If the password is incorrect, you'll see a `"nuh uh"` message.
+
+## `Electron Usage`
+If you want to know how `electron.js` version works then please read `electron/README.md` and you can find the full code behind this software.
+
+1. Portable version which require no installation can be found in the root directory of this repository: `File Encrypter Decrypter 1.0.0.exe`
+https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
+
+2. Setup version which will let u install the program in your commputer and use it: `File Encrypter Decrypter Setup 1.0.0.exe`
+https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
