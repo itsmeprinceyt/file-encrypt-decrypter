@@ -1,13 +1,44 @@
-# ⚡ Electron + Next.js + TailwindCSS + TypeScript Project Template
+# ⚡ File Encrypter & Decrypter - Desktop App
 
-This template includes:
-- Next.js
-- Electron.js
-- TailwindCSS
-- Typescript
-- Electron-builder
+This is a powerful cross-platform desktop application built with:
+
+- **Next.js** (UI frontend)
+- **Electron.js** (Desktop runtime)
+- **TailwindCSS** (UI styling)
+- **TypeScript** (Type safety)
+- **Electron-Builder** (Builds portable `.exe` or installer)
+
+🔐 Easily encrypt or decrypt files using **AES-GCM** algorithm for secure file sharing and storage.
+
 ---
 
+## 🧠 Features
+
+- 🔐 AES-GCM 256-bit secure encryption
+- 🔑 Password-based encryption with confirmation
+- 💬 Friendly prompts and alerts
+- 📦 Built with modern UI using Tailwind
+- ⚡ Fast and responsive desktop app
+
+---
+
+## Folder Structure
+```bash
+project-root/
+├── electron/ # Electron-specific code
+│ ├── main.ts # Main Electron process
+│ ├── preload.ts # Preload scripts
+│ ├── dist/ # Compiled Electron files
+│ └── assets/ # Icons and build assets
+├── src/ # Next.js app
+│ └── app/ # Frontend logic
+│ └── assets/ # Which are used in front-end
+├── out/ # Exported Next.js files
+├── dist/ # Final app output
+├── move-out.js # For putting  `out/` into `electron/dist/`
+└── move-assets.js # Copies static files to Electron dist
+```
+---
 ## 📜 NPM Scripts
 
 | Script              | Description                                                                 |
@@ -25,24 +56,31 @@ This template includes:
 
 ```json
   "build": {
-    "appId": "com.yourcompany.yourapp",
-    "productName": "productName",
+    "appId": "com.company.appid",
+    "productName": "Proper Software name without any unallowed characters", // dont add stuff like "/" , "|" , "$" [all the unallowed characters should not be used here or in any product name variable]
     "files": [
       "electron/dist/**/*",
       "out/**/*",
       "package.json"
     ],
     "directories": {
-      "buildResources": "assets"
+      "buildResources": "electron/assets" // it finds all the license and stuff from here
     },
     "win": {
       "target": [
         "portable",
         "nsis"
       ],
-      "icon": "assets/icon.ico"
+      "icon": "electron/assets/logo.ico" // icon where it is situated in the context oc package.json
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Proper Software name without any unallowed characters"
     }
-  },
+  }
 ```
 
 ## 📁 Output
@@ -51,15 +89,54 @@ After building, your .exe or app installer will be available in the `dist/` root
 ## 🚀 Get Started for development
 
 ```bash
-npm install
-npm run build:electron
-npm run dev:electron
+npm/npx install # Installs all the necessary files 
+npm run build:electron # Run so that your electron is compiled into `dist` folder
+npm run dev:electron # Launch Electron pointing to frontend
 ```
 
 ## 🚀 For building exe
-
+To create an installer or `.exe` portable app:
 ```bash
 npm run build:app
 ```
+Output will be inside the root-level `/dist` folder.
 
-# Good luck 🫡
+## 🧾 How It Works
+1. Start Screen: Choose between Encrypt or Decrypt.
+2. File Picker: Browse and select the file to process.
+3. Password Flow:
+    - For encryption: Enter and confirm a password.
+    - For decryption: Enter the original password.
+4. Processing:
+    - Files are encrypted/decrypted using AES-GCM with random IV and auth tag.
+5. Save Location:
+    - Choose where to save the resulting file.
+6. Completion: App returns a successful prompt and button which will take you to the encrypted/decrypted file.
+
+## Shortcuts
+- Home: `Ctrl + H`
+- Encrypt: `Ctrl + E`
+- Decrypt: `Ctrl + D`
+
+## 📁 Encryption Format (Under the Hood)
+- Algorithm: aes-256-gcm
+- Structure:
+    -iv (12 bytes) + encrypted data + auth tag (16 bytes)
+- Encrypted files will have `.prince` at the end of the name.
+- Decrypted file: restores original extension and remove `.prince`
+
+## 📎 Notes
+- Do not lose the password used during encryption — the app cannot recover encrypted files without it.
+- All file reads and writes are handled locally; no data is sent externally.
+
+## 📦 Dependencies
+- next
+- react
+- tailwindcss
+- electron
+- electron-builder
+- typescript
+- crypto (Node.js module)
+
+## Video 
+[TBA]
