@@ -138,5 +138,13 @@ Output will be inside the root-level `/dist` folder.
 - typescript
 - crypto (Node.js module)
 
+## `DOWNLOAD LINKS`
+
+1. Portable version which require no installation can be found in the root directory of this repository: `File Encrypter Decrypter 1.0.0.exe`
+https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
+
+2. Setup version which will let u install the program in your commputer and use it: `File Encrypter Decrypter Setup 1.0.0.exe`
+https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
+
 ## Video 
 [TBA]
