@@ -147,4 +147,4 @@ https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlk
 https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
 
 ## Video 
-[TBA]
+https://www.youtube.com/watch?v=e7MSCbvnSZs
