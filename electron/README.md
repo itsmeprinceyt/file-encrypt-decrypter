@@ -140,6 +140,8 @@ Output will be inside the root-level `/dist` folder.
 
 ## `DOWNLOAD LINKS`
 
+0. Download from website: https://file-encrypt-decrypter-website.vercel.app/
+
 1. Portable version which require no installation can be found in the root directory of this repository: `File Encrypter Decrypter 1.0.0.exe`
 https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
 
