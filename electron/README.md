@@ -1,4 +1,4 @@
-# ⚡ File Encrypter & Decrypter - Desktop App
+# File Encrypter & Decrypter - Desktop App
 
 This is a powerful cross-platform desktop application built with:
 
@@ -8,17 +8,17 @@ This is a powerful cross-platform desktop application built with:
 - **TypeScript** (Type safety)
 - **Electron-Builder** (Builds portable `.exe` or installer)
 
-🔐 Easily encrypt or decrypt files using **AES-GCM** algorithm for secure file sharing and storage.
+Easily encrypt or decrypt files using the **AES-GCM** algorithm for secure file sharing and storage.
 
 ---
 
-## 🧠 Features
+## Features
 
-- 🔐 AES-GCM 256-bit secure encryption
-- 🔑 Password-based encryption with confirmation
-- 💬 Friendly prompts and alerts
-- 📦 Built with modern UI using Tailwind
-- ⚡ Fast and responsive desktop app
+- AES-GCM 256-bit secure encryption
+- Password-based encryption with confirmation
+- Friendly prompts and alerts
+- Modern UI built with Tailwind
+- Fast and responsive desktop app
 
 ---
 
@@ -39,7 +39,7 @@ project-root/
 └── move-assets.js # Copies static files to Electron dist
 ```
 ---
-## 📜 NPM Scripts
+## NPM Scripts
 
 | Script              | Description                                                                 |
 |---------------------|-----------------------------------------------------------------------------|
@@ -52,7 +52,7 @@ project-root/
 
 ---
 
-## 🔗 Build Config(change if needed) for `package.json` for (electron-builder)
+## Build Config (change if needed) for `package.json` (electron-builder)
 
 ```json
   "build": {
@@ -83,10 +83,10 @@ project-root/
   }
 ```
 
-## 📁 Output
+## Output
 After building, your .exe or app installer will be available in the `dist/` root folder.
 
-## 🚀 Get Started for development
+## Get Started for Development
 
 ```bash
 npm install # Installs all the necessary files 
@@ -94,14 +94,14 @@ npm run build:electron # Run so that your electron is compiled into `dist` folde
 npm run dev:electron # Launch Electron pointing to frontend
 ```
 
-## 🚀 For building exe
+## Building the Executable
 To create an installer or `.exe` portable app:
 ```bash
 npm run build:app
 ```
 Output will be inside the root-level `/dist` folder.
 
-## 🧾 How It Works
+## How It Works
 1. Start Screen: Choose between Encrypt or Decrypt.
 2. File Picker: Browse and select the file to process.
 3. Password Flow:
@@ -118,18 +118,18 @@ Output will be inside the root-level `/dist` folder.
 - Encrypt: `Ctrl + E`
 - Decrypt: `Ctrl + D`
 
-## 📁 Encryption Format (Under the Hood)
+## Encryption Format (Under the Hood)
 - Algorithm: aes-256-gcm
 - Structure:
-    -iv (12 bytes) + encrypted data + auth tag (16 bytes)
-- Encrypted files will have `.prince` at the end of the name.
-- Decrypted file: restores original extension and remove `.prince`
+    - iv (12 bytes) + encrypted data + auth tag (16 bytes)
+- Encrypted files will have `.prince` appended to the file name.
+- Decrypted file: restores original extension and removes `.prince`
 
-## 📎 Notes
+## Notes
 - Do not lose the password used during encryption — the app cannot recover encrypted files without it.
 - All file reads and writes are handled locally; no data is sent externally.
 
-## 📦 Dependencies
+## Dependencies
 - next
 - react
 - tailwindcss
@@ -138,16 +138,14 @@ Output will be inside the root-level `/dist` folder.
 - typescript
 - crypto (Node.js module)
 
-## `IMPORTANT LINKS`
+## Important Links
 
-1. Website Link: https://file-encrypt-decrypter-website.vercel.app/
+1. Website: https://file-encrypt-decrypter-website.vercel.app/
 2. Website Repository: https://github.com/itsmeprinceyt/file-encrypt-decrypter-website
 3. Main Repository: https://github.com/itsmeprinceyt/file-encrypt-decrypter
 4. Software Repository: https://github.com/itsmeprinceyt/file-encrypt-decrypter/tree/main/electron
-5. Portable version Download Link: `(File Encrypter Decrypter 1.0.0.exe)`
-https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
-6. Setup version Download Link: `(File Encrypter Decrypter Setup 1.0.0.exe)`
-https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
+5. Latest Release: https://github.com/itsmeprinceyt/file-encrypt-decrypter/releases/tag/latest
 
-## Video Explaination
+## Video Explanation
+
 https://www.youtube.com/watch?v=e7MSCbvnSZs
