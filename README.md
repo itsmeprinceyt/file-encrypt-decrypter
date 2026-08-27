@@ -81,9 +81,3 @@ Handshake: ********
 
 ## `Electron Usage`
 If you want to know how `electron.js` version works then please read `electron/README.md` and you can find the full code behind this software.
-
-1. Portable version which require no installation can be found in the root directory of this repository: `File Encrypter Decrypter 1.0.0.exe`
-https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
-
-2. Setup version which will let u install the program in your commputer and use it: `File Encrypter Decrypter Setup 1.0.0.exe`
-https://www.dropbox.com/scl/fo/0tr3x1bifvo2g18yq8zku/ABWyAsNld_nXTPmNdtXGsUw?rlkey=axk51504gb378ahjajhgceefj&st=8keenkhp&dl=0
