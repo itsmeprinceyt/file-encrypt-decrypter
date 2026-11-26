@@ -1,0 +1,1 @@
+export const MIN_PASSPHRASE_LENGTH = 12;

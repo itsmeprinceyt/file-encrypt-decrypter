@@ -5,22 +5,25 @@ import HomeScreen from "./(components)/Homescreen";
 import EncryptScreen from "./(components)/Encryptscreen";
 import DecryptScreen from "./(components)/Decryptscreen";
 import DoneScreen from "./(components)/Donescreen";
-import Side from "./(components)/Side";
 import { ScreenMode } from "../types/ScreenMode.type";
 
 export default function Home() {
   const [mode, setMode] = useState<ScreenMode>("home");
-  const [inputPath, setInputPath] = useState<string>("");
-  const [outputPath, setOutputPath] = useState<string>("");
-  const [folderPath, setFolderPath] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
+  const [inputPath, setInputPath] = useState("");
+  const [outputPath, setOutputPath] = useState("");
+  const [folderPath, setFolderPath] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [notice, setNotice] = useState("");
+
+  const changeMode = (next: ScreenMode) => {
+    if (next === "encrypt" || next === "decrypt") setNotice("");
+    setMode(next);
+  };
 
   useEffect(() => {
-    window.electronAPI?.onShortcutNavigate?.((_event: any, newMode: ScreenMode) => {
-      setMode(newMode);
-    });
+    return window.electronAPI?.onShortcutNavigate?.((_event, next) => changeMode(next));
   }, []);
 
   const commonProps = {
@@ -32,34 +35,31 @@ export default function Home() {
     setPassword,
     confirmPassword,
     setConfirmPassword,
-    folderPath,
     setFolderPath,
-    setMode,
+    setMode: changeMode,
     setMessage,
+    setNotice,
   };
 
-  const renderScreen = () => {
-    switch (mode) {
-      case "home":
-        return <HomeScreen setMode={setMode} />;
-      case "encrypt":
-        return <EncryptScreen {...commonProps} />;
-      case "decrypt":
-        return <DecryptScreen {...commonProps} />;
-      case "done":
-        return <DoneScreen message={message} setMode={setMode} setoutputPath={setFolderPath} outputPath={folderPath} />;
-      default:
-        return null;
-    }
+  const titles: Record<ScreenMode, string> = {
+    home: "Your files, kept private.",
+    encrypt: "Encrypt a file",
+    decrypt: "Decrypt a file",
+    done: "All done",
   };
 
   return (
-    <div className="flex flex-col md:flex-row items-center justify-center min-h-screen">
-      <div className="w-full md:w-1/2 border-r p-4 min-h-screen flex items-center justify-center bg-gradient-to-t from-blue-900 to-blue-950">
-        <Side />
-      </div>
-      <div className="w-full md:w-1/2 p-4 min-h-screen flex items-center justify-center">
-        {renderScreen()}
+    <div className="min-h-screen bg-[#f5f8f6] px-6 py-7 text-[#172321] sm:px-10">
+      <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-5xl flex-col">
+        <main className="flex flex-1 flex-col items-center justify-center py-12">
+          {mode === "home" && <p className="mb-7 max-w-md text-center text-3xl font-semibold tracking-tight sm:text-4xl">{titles.home}</p>}
+          {mode !== "home" && <p className="mb-7 text-center text-2xl font-semibold tracking-tight">{titles[mode]}</p>}
+          {mode === "home" && <HomeScreen setMode={changeMode} />}
+          {mode === "encrypt" && <EncryptScreen {...commonProps} />}
+          {mode === "decrypt" && <DecryptScreen {...commonProps} />}
+          {mode === "done" && <DoneScreen message={message} notice={notice} setMode={changeMode} setoutputPath={setFolderPath} outputPath={folderPath} />}
+        </main>
+
       </div>
     </div>
   );

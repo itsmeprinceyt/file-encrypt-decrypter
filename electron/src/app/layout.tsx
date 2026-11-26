@@ -22,6 +22,21 @@ export const metadata: Metadata = {
   creator: "ItsMe Prince",
 };
 
+const isDevelopment = process.env.NODE_ENV === "development";
+
+const contentSecurityPolicy = [
+  "default-src 'self'",
+  `script-src 'self' 'unsafe-inline'${isDevelopment ? " 'unsafe-eval'" : ""}`,
+  "style-src 'self' 'unsafe-inline'",
+  "img-src 'self' data:",
+  "font-src 'self' data:",
+  `connect-src 'self'${isDevelopment ? " http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:*" : ""}`,
+  "object-src 'none'",
+  "base-uri 'none'",
+  "frame-src 'none'",
+  "form-action 'none'",
+].join("; ");
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -29,6 +44,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta httpEquiv="Content-Security-Policy" content={contentSecurityPolicy} />
+      </head>
       <body
         className={`antialiased`}
       >

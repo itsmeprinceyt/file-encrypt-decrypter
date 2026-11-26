@@ -1,13 +1,32 @@
-import { app, BrowserWindow, ipcMain, dialog, Menu, shell, globalShortcut } from "electron";
+import { app, BrowserWindow, ipcMain, dialog, Menu, shell, clipboard } from "electron";
+import fs from "fs";
 import path from "path";
-import { encryptFile, decryptFile } from "./cryptoHandler";
+import { CLIPBOARD_CLEAR_MS, DECRYPTION_ERROR_MESSAGE, ENCRYPTED_EXTENSION, MIN_PASSPHRASE_LENGTH } from "./constants";
+import { DecryptionError, decryptFile, encryptFile, inspectFileFormat, type DecryptResult } from "./cryptoHandler";
+import { generateRecoveryKey, isValidRecoveryKey } from "./recoveryKey";
 
 let mainWindow: BrowserWindow | null = null;
+let clipboardClearTimer: NodeJS.Timeout | null = null;
+let lastCopiedRecoveryKey: string | null = null;
+
+const ALLOWED_EXTERNAL_PROTOCOLS = new Set(["https:"]);
+const ALLOWED_EXTERNAL_HOSTS = new Set([
+    "github.com",
+    "www.youtube.com",
+    "youtube.com",
+    "file-encrypt-decrypter-website.vercel.app",
+]);
 
 function createWindow() {
     mainWindow = new BrowserWindow({
         webPreferences: {
             preload: path.join(__dirname, "preload.js"),
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true,
+            webSecurity: true,
+            allowRunningInsecureContent: false,
+            spellcheck: false,
         },
         icon: path.join(__dirname, "assets", "logo.ico"),
     });
@@ -23,12 +42,22 @@ function createWindow() {
         mainWindow.loadURL(startUrl);
     }
 
-    const zoomStep = 0.1;
     const webContents = mainWindow!.webContents;
+
+    webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+    webContents.session.setPermissionRequestHandler((_contents, _permission, callback) => callback(false));
+    webContents.on("will-navigate", (event, url) => {
+        const allowed = app.isPackaged
+            ? url.startsWith("file://")
+            : url.startsWith("http://localhost:3000");
+        if (!allowed) event.preventDefault();
+    });
+
+    const zoomStep = 0.1;
 
     webContents.on("before-input-event", (_, input) => {
         if (input.control && input.type === "keyDown") {
-            let current = webContents.getZoomFactor();
+            const current = webContents.getZoomFactor();
             if (input.key === "=" || input.key === "+") {
                 webContents.setZoomFactor(Math.min(current + zoomStep, 3));
             }
@@ -38,6 +67,10 @@ function createWindow() {
             if (input.key === "0") {
                 webContents.setZoomFactor(1.0);
             }
+            const key = input.key.toLowerCase();
+            if (key === "e") webContents.send("shortcut-navigate", "encrypt");
+            if (key === "d") webContents.send("shortcut-navigate", "decrypt");
+            if (key === "h") webContents.send("shortcut-navigate", "home");
         }
     });
 }
@@ -120,6 +153,72 @@ const menuTemplate: Electron.MenuItemConstructorOptions[] = [
     },
 ];
 
+function asRecord(payload: unknown): Record<string, unknown> {
+    if (typeof payload !== "object" || payload === null) {
+        throw new Error("Invalid request.");
+    }
+    return payload as Record<string, unknown>;
+}
+
+function assertString(value: unknown, field: string): string {
+    if (typeof value !== "string" || value.length === 0 || value.length > 4096) {
+        throw new Error(`Invalid ${field}.`);
+    }
+    return value;
+}
+
+function assertExistingFile(value: unknown, field: string): string {
+    const filePath = assertString(value, field);
+    try {
+        if (!fs.statSync(filePath).isFile()) throw new Error();
+    } catch {
+        throw new Error(`Invalid ${field}.`);
+    }
+    return filePath;
+}
+
+async function clearClipboardIfUnchanged(value: string): Promise<void> {
+    try {
+        const current = await clipboard.readText();
+        if (current === value) clipboard.clear();
+    } catch {
+        void 0;
+    }
+}
+
+async function rememberRecoveryKey(value: string): Promise<void> {
+    await clipboard.writeText(value);
+    lastCopiedRecoveryKey = value;
+    if (clipboardClearTimer) clearTimeout(clipboardClearTimer);
+    clipboardClearTimer = setTimeout(() => {
+        clipboardClearTimer = null;
+        void clearClipboardIfUnchanged(value);
+    }, CLIPBOARD_CLEAR_MS);
+    clipboardClearTimer.unref();
+}
+
+function progressFor(event: Electron.IpcMainInvokeEvent) {
+    const window = BrowserWindow.fromWebContents(event.sender);
+    return (info: { processed: number; total: number }) => {
+        if (window && !window.isDestroyed()) {
+            window.webContents.send("operation-progress", info);
+        }
+    };
+}
+
+async function runDecryption(task: () => Promise<DecryptResult>): Promise<DecryptResult> {
+    try {
+        return await task();
+    } catch (error) {
+        if (error instanceof DecryptionError) throw new Error(DECRYPTION_ERROR_MESSAGE);
+        const code = (error as NodeJS.ErrnoException).code;
+        if (code === "EACCES" || code === "EPERM" || code === "ENOSPC" || code === "EROFS") {
+            throw new Error("Unable to write the decrypted file. Check the destination folder and try again.");
+        }
+        throw error;
+    }
+}
+
 app.whenReady().then(() => {
     console.log("✅ Electron app ready");
     createWindow();
@@ -128,25 +227,6 @@ app.whenReady().then(() => {
     app.on("activate", () => {
         if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
-
-    globalShortcut.register("CommandOrControl+E", () => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) {
-            win.webContents.send("shortcut-navigate", "encrypt");
-        }
-    });
-    globalShortcut.register("CommandOrControl+D", () => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) {
-            win.webContents.send("shortcut-navigate", "decrypt");
-        }
-    });
-    globalShortcut.register("CommandOrControl+H", () => {
-        const win = BrowserWindow.getAllWindows()[0];
-        if (win) {
-            win.webContents.send("shortcut-navigate", "home");
-        }
-    });
 });
 
 app.on("window-all-closed", () => {
@@ -154,37 +234,130 @@ app.on("window-all-closed", () => {
 });
 
 app.on("will-quit", () => {
-    globalShortcut.unregisterAll();
+    if (clipboardClearTimer) {
+        clearTimeout(clipboardClearTimer);
+        clipboardClearTimer = null;
+    }
+    if (lastCopiedRecoveryKey) {
+        void clearClipboardIfUnchanged(lastCopiedRecoveryKey);
+        lastCopiedRecoveryKey = null;
+    }
 });
 
 process.on("uncaughtException", (err) => {
     console.error("Uncaught Exception:", err);
 });
 
-ipcMain.on("open-external", (_, url) => {
-    shell.openExternal(url);
+ipcMain.handle("open-external", async (_, rawUrl) => {
+    if (typeof rawUrl !== "string") return;
+    let parsed: URL;
+    try {
+        parsed = new URL(rawUrl);
+    } catch {
+        return;
+    }
+    if (!ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) return;
+    if (!ALLOWED_EXTERNAL_HOSTS.has(parsed.hostname)) return;
+    await shell.openExternal(parsed.toString());
 });
 
 ipcMain.on("show-item", (_, filePath) => {
+    if (typeof filePath !== "string" || filePath.length === 0) return;
     shell.showItemInFolder(filePath);
 });
 
-
-ipcMain.handle("select-file", async () => {
-    const result = await dialog.showOpenDialog({ properties: ["openFile"] });
+ipcMain.handle("select-file", async (_, kind) => {
+    const filters =
+        kind === "decrypt"
+            ? [{ name: "Encrypted files", extensions: ["prince"] }]
+            : undefined;
+    const result = await dialog.showOpenDialog({ properties: ["openFile"], filters });
+    if (result.canceled || result.filePaths.length === 0) return null;
     return result.filePaths[0];
 });
 
-ipcMain.handle("encrypt", async (_, inputPath, outputPath, password, confirmPassword) => {
-    if (password !== confirmPassword) throw new Error("Passwords do not match.");
-    encryptFile(inputPath, outputPath, password);
+ipcMain.handle("inspect-file", async (_, inputPath) => {
+    const filePath = assertExistingFile(inputPath, "input file");
+    return { version: inspectFileFormat(filePath) };
 });
 
-ipcMain.handle("decrypt", async (_, inputPath, outputPath, password) => {
-    decryptFile(inputPath, outputPath, password);
+ipcMain.handle("generate-recovery-key", async () => generateRecoveryKey());
+
+ipcMain.handle("validate-recovery-key", async (_, recoveryKey) => isValidRecoveryKey(recoveryKey));
+
+ipcMain.handle("copy-recovery-key", async (_, recoveryKey) => {
+    if (!isValidRecoveryKey(recoveryKey)) throw new Error("Invalid Recovery Key.");
+    await rememberRecoveryKey(recoveryKey as string);
+});
+
+ipcMain.handle("save-recovery-key", async (_, recoveryKey) => {
+    if (!isValidRecoveryKey(recoveryKey)) throw new Error("Invalid Recovery Key.");
+    const result = await dialog.showSaveDialog({
+        title: "Save Recovery Key",
+        defaultPath: path.join(app.getPath("documents"), "prince-recovery-key.key"),
+        filters: [{ name: "Recovery Key", extensions: ["key"] }],
+    });
+    if (result.canceled || !result.filePath) return null;
+    const target = result.filePath.toLowerCase().endsWith(".key")
+        ? result.filePath
+        : `${result.filePath}.key`;
+    fs.writeFileSync(target, `${recoveryKey}\n`, { mode: 0o600 });
+    return target;
+});
+
+ipcMain.handle("encrypt", async (event, payload) => {
+    const request = asRecord(payload);
+    const inputPath = assertExistingFile(request.inputPath, "input file");
+    const outputPath = assertString(request.outputPath, "output path");
+    if (!outputPath.toLowerCase().endsWith(ENCRYPTED_EXTENSION)) {
+        throw new Error(`Output file must use the ${ENCRYPTED_EXTENSION} extension.`);
+    }
+    if (path.resolve(inputPath) === path.resolve(outputPath)) {
+        throw new Error("Output file must be different from the input file.");
+    }
+    const passphrase = assertString(request.passphrase, "passphrase");
+    if (passphrase.length < MIN_PASSPHRASE_LENGTH) {
+        throw new Error(`Passphrase must be at least ${MIN_PASSPHRASE_LENGTH} characters.`);
+    }
+    const confirmPassphrase = assertString(request.confirmPassphrase, "passphrase confirmation");
+    if (passphrase !== confirmPassphrase) throw new Error("Passphrases do not match.");
+    if (!isValidRecoveryKey(request.recoveryKey)) throw new Error("Invalid Recovery Key.");
+    await encryptFile(inputPath, outputPath, passphrase, request.recoveryKey as string, {
+        onProgress: progressFor(event),
+    });
+});
+
+ipcMain.handle("decrypt", async (event, payload) => {
+    const request = asRecord(payload);
+    const inputPath = assertExistingFile(request.inputPath, "input file");
+    const outputPath = assertString(request.outputPath, "output path");
+    if (path.resolve(inputPath) === path.resolve(outputPath)) {
+        throw new Error("Output file must be different from the input file.");
+    }
+
+    if (inspectFileFormat(inputPath) === 2) {
+        const passphrase = assertString(request.passphrase, "passphrase");
+        if (!isValidRecoveryKey(request.recoveryKey)) throw new Error(DECRYPTION_ERROR_MESSAGE);
+        const recoveryKey = request.recoveryKey as string;
+        return runDecryption(() =>
+            decryptFile(
+                inputPath,
+                outputPath,
+                { kind: "v2", passphrase, recoveryKey },
+                { onProgress: progressFor(event) }
+            )
+        );
+    }
+
+    const password = assertString(request.password, "password");
+    return runDecryption(() =>
+        decryptFile(inputPath, outputPath, { kind: "legacy", password }, { onProgress: progressFor(event) })
+    );
 });
 
 ipcMain.handle("save-file", async (_, inputPath, mode: "encrypt" | "decrypt") => {
+    if (typeof inputPath !== "string" || inputPath.length === 0) throw new Error("Invalid input file.");
+    if (mode !== "encrypt" && mode !== "decrypt") throw new Error("Invalid save mode.");
     const baseName = path.basename(inputPath);
 
     const dir = await dialog.showOpenDialog({ properties: ["openDirectory"] });
@@ -192,9 +365,9 @@ ipcMain.handle("save-file", async (_, inputPath, mode: "encrypt" | "decrypt") =>
 
     const saveName =
         mode === "encrypt"
-            ? baseName + ".prince"
-            : baseName.endsWith(".prince")
-                ? baseName.slice(0, -7)
+            ? baseName + ENCRYPTED_EXTENSION
+            : baseName.endsWith(ENCRYPTED_EXTENSION)
+                ? baseName.slice(0, -ENCRYPTED_EXTENSION.length)
                 : baseName;
 
     return path.join(dir.filePaths[0], saveName);

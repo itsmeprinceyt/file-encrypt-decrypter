@@ -19,6 +19,9 @@
     "include": [
         "./main.ts",
         "./preload.ts",
+        "./cryptoHandler.ts",
+        "./constants.ts",
+        "./recoveryKey.ts",
         "./types/**/*.ts",
         "./assets/*"
     ]

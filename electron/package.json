@@ -10,7 +10,10 @@
     "move:out": "node move-out.js",
     "build:electron": "tsc -p electron/tsconfig.electron.json && node move-assets.js",
     "dev:electron": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && cross-env NODE_ENV=development electron electron/dist/main.js\"",
-    "build:app": "npm run build:next && npm run move:out && npm run build:electron && electron-builder"
+    "build:app": "npm run build:next && npm run move:out && npm run build:electron && electron-builder",
+    "lint": "eslint .",
+    "smoke": "npm run build:next && node scripts/smoke.js",
+    "test": "npm run build:electron && node --test tests/crypto.test.js"
   },
   "build": {
     "appId": "com.prince.fileendecrypter",
@@ -39,23 +42,26 @@
     }
   },
   "dependencies": {
-    "next": "^15.3.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "next": "^16.4.6",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4.1.11",
-    "@types/react": "19.1.8",
-    "autoprefixer": "^10.4.21",
-    "concurrently": "^8.2.0",
-    "cross-env": "^7.0.3",
-    "electron": "^29.0.0",
-    "electron-builder": "^24.6.3",
-    "fs-extra": "^11.3.0",
-    "postcss": "^8.5.6",
-    "tailwindcss": "^4.1.11",
-    "typescript": "^5.4.5",
-    "wait-on": "^7.0.1"
+    "@tailwindcss/postcss": "^4.3.5",
+    "@types/react": "^19.3.3",
+    "@types/react-dom": "^19.3.0",
+    "autoprefixer": "^10.7.0",
+    "concurrently": "^10.0.7",
+    "cross-env": "^10.1.0",
+    "electron": "^45.5.0",
+    "electron-builder": "^26.18.0",
+    "eslint": "^9.39.0",
+    "eslint-config-next": "^16.4.6",
+    "fs-extra": "^11.4.1",
+    "postcss": "^8.5.33",
+    "tailwindcss": "^4.3.5",
+    "typescript": "^5.9.3",
+    "wait-on": "^9.5.1"
   },
   "keywords": [],
   "author": "",

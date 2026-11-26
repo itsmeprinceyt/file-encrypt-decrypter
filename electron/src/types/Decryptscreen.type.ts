@@ -10,4 +10,5 @@ export type DecryptScreenProps = {
     setFolderPath: (val: string) => void;
     setMode: (mode: ScreenMode) => void;
     setMessage: (msg: string) => void;
+    setNotice: (msg: string) => void;
 };
