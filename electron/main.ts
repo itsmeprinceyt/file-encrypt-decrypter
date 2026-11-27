@@ -1,4 +1,5 @@
 import { app, BrowserWindow, ipcMain, dialog, Menu, shell, clipboard } from "electron";
+import { spawn } from "child_process";
 import fs from "fs";
 import path from "path";
 import { CLIPBOARD_CLEAR_MS, DECRYPTION_ERROR_MESSAGE, ENCRYPTED_EXTENSION, MIN_PASSPHRASE_LENGTH } from "./constants";
@@ -261,9 +262,40 @@ ipcMain.handle("open-external", async (_, rawUrl) => {
     await shell.openExternal(parsed.toString());
 });
 
-ipcMain.on("show-item", (_, filePath) => {
-    if (typeof filePath !== "string" || filePath.length === 0) return;
-    shell.showItemInFolder(filePath);
+function revealInFileManager(target: string): void {
+    if (process.platform === "win32") {
+        // On Windows 11, shell.showItemInFolder opens Explorer behind the app
+        // window, which looks like nothing happened. Launching Explorer itself
+        // brings the folder to the foreground and selects the file.
+        spawn("explorer.exe", [`/select,${target}`], { detached: true, stdio: "ignore" }).unref();
+        return;
+    }
+    shell.showItemInFolder(target);
+}
+
+async function openFolder(folder: string): Promise<boolean> {
+    if (process.platform === "win32") {
+        spawn("explorer.exe", [folder], { detached: true, stdio: "ignore" }).unref();
+        return true;
+    }
+    return (await shell.openPath(folder)) === "";
+}
+
+ipcMain.handle("show-item", async (_, filePath) => {
+    if (typeof filePath !== "string" || filePath.length === 0) {
+        return { ok: false, error: "There is no file location to show." };
+    }
+    const target = path.normalize(path.resolve(filePath));
+    if (fs.existsSync(target)) {
+        revealInFileManager(target);
+        return { ok: true };
+    }
+    const folder = path.dirname(target);
+    if (fs.existsSync(folder)) {
+        const opened = await openFolder(folder);
+        return opened ? { ok: true } : { ok: false, error: "Could not open the folder." };
+    }
+    return { ok: false, error: "That file is no longer at this location." };
 });
 
 ipcMain.handle("select-file", async (_, kind) => {

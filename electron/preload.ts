@@ -19,7 +19,7 @@ const api: ElectronAPI = {
     openExternal: (url) => {
         void ipcRenderer.invoke("open-external", url);
     },
-    showItemInFolder: (filePath) => ipcRenderer.send("show-item", filePath),
+    showItemInFolder: (filePath) => ipcRenderer.invoke("show-item", filePath),
     onProgress: (callback) => {
         const listener = (_event: unknown, info: ProgressInfo) => callback(info);
         ipcRenderer.on("operation-progress", listener);

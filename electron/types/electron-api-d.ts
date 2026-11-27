@@ -40,7 +40,7 @@ export interface ElectronAPI {
     encrypt: (payload: EncryptPayload) => Promise<void>;
     decrypt: (payload: DecryptPayload) => Promise<DecryptResult>;
     openExternal: (url: string) => void;
-    showItemInFolder: (filePath: string) => void;
+    showItemInFolder: (filePath: string) => Promise<{ ok: boolean; error?: string }>;
     onProgress: (callback: (info: ProgressInfo) => void) => () => void;
     onShortcutNavigate: (
         callback: (event: IpcRendererEvent, mode: "home" | "encrypt" | "decrypt" | "done") => void

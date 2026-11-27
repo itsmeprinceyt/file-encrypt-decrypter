@@ -30,6 +30,16 @@ input {
   font: inherit;
 }
 
+button:not(:disabled),
+summary,
+[role="button"] {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
 button:focus-visible,
 input:focus-visible {
   outline: 3px solid rgb(20 125 104 / 20%);
