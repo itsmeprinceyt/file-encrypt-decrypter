@@ -1,4 +1,4 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 import type {
     DecryptPayload,
     ElectronAPI,
@@ -12,8 +12,9 @@ const api: ElectronAPI = {
     inspectFile: (inputPath) => ipcRenderer.invoke("inspect-file", inputPath),
     generateRecoveryKey: () => ipcRenderer.invoke("generate-recovery-key"),
     validateRecoveryKey: (recoveryKey) => ipcRenderer.invoke("validate-recovery-key", recoveryKey),
+    selectRecoveryKeyFile: () => ipcRenderer.invoke("select-recovery-key-file"),
     copyRecoveryKey: (recoveryKey) => ipcRenderer.invoke("copy-recovery-key", recoveryKey),
-    saveRecoveryKey: (recoveryKey) => ipcRenderer.invoke("save-recovery-key", recoveryKey),
+    saveRecoveryKey: (recoveryKey, sourcePath) => ipcRenderer.invoke("save-recovery-key", recoveryKey, sourcePath),
     encrypt: (payload: EncryptPayload) => ipcRenderer.invoke("encrypt", payload),
     decrypt: (payload: DecryptPayload) => ipcRenderer.invoke("decrypt", payload),
     openExternal: (url) => {
@@ -27,10 +28,14 @@ const api: ElectronAPI = {
             ipcRenderer.removeListener("operation-progress", listener);
         };
     },
-    onShortcutNavigate: (callback) =>
-        ipcRenderer.on("shortcut-navigate", (event, mode) => {
-            callback(event, mode as "home" | "encrypt" | "decrypt" | "done");
-        }),
+    onShortcutNavigate: (callback) => {
+        const listener = (event: IpcRendererEvent, mode: "home" | "encrypt" | "decrypt" | "done") =>
+            callback(event, mode);
+        ipcRenderer.on("shortcut-navigate", listener);
+        return () => {
+            ipcRenderer.removeListener("shortcut-navigate", listener);
+        };
+    },
 };
 
 contextBridge.exposeInMainWorld("electronAPI", api);

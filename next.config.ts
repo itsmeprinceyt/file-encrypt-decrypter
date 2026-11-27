@@ -3,7 +3,7 @@ import type { NextConfig } from "next";
 /** @type {import('next').NextConfig} */
 const nextConfig: NextConfig = {
   output: "export",
-  assetPrefix: "./",
+  assetPrefix: process.env.NODE_ENV === "development" ? undefined : "./",
   images: {
     unoptimized: true,
   },

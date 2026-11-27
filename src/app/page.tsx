@@ -53,7 +53,6 @@ export default function Home() {
       <div className="mx-auto flex min-h-[calc(100vh-3.5rem)] w-full max-w-5xl flex-col">
         <main className="flex flex-1 flex-col items-center justify-center py-12">
           {mode === "home" && <p className="mb-7 max-w-md text-center text-3xl font-semibold tracking-tight sm:text-4xl">{titles.home}</p>}
-          {mode !== "home" && <p className="mb-7 text-center text-2xl font-semibold tracking-tight">{titles[mode]}</p>}
           {mode === "home" && <HomeScreen setMode={changeMode} />}
           {mode === "encrypt" && <EncryptScreen {...commonProps} />}
           {mode === "decrypt" && <DecryptScreen {...commonProps} />}

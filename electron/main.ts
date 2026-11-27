@@ -89,14 +89,14 @@ const menuTemplate: Electron.MenuItemConstructorOptions[] = [
                             type: "info",
                             title: "About",
                             message: `🔐 File Encrypter Decrypter v1.0`,
-                            detail: `I wanted a secure way to protect my sensitive files like .env configs, so I built this tool using AES-256-GCM encryption — one of the live saving thing I made.\n\nAlso, this is the first software which I made so it may not be upto the mark but I tried my best.\n\nIf you'd like to check out my social profiles or repositories, feel free to use the buttons below. Stay safe, stay encrypted.`,
-                            buttons: ["YouTube", "GitHub Profile", "Repo", "Close"],
+                            detail: `I wanted a secure way to protect sensitive files like .env configs, so I built this local-first tool. Files are encrypted on your device with AES-256-GCM and require both a passphrase and a separate 256-bit Recovery Key. A memory-hard KDF and HKDF-SHA256 derive a unique encryption key for every file.\n\nEncryption and decryption happen entirely on your device — files are never uploaded. Keep both recovery factors safe and store the Recovery Key separately from the encrypted file.\n\nVisit my YouTube channel, portfolio, or project repository using the buttons below. Stay safe, stay encrypted.`,
+                            buttons: ["YouTube", "Portfolio", "Repo", "Close"],
                             noLink: true,
                         })
                         .then((res) => {
                             const links = [
                                 "https://www.youtube.com/@itsmeprinceyt",
-                                "https://github.com/itsmeprinceyt",
+                                "https://www.itsmeprince.com",
                                 "https://github.com/itsmeprinceyt/file-encrypt-decrypter",
                             ];
                             if (res.response < 3) shell.openExternal(links[res.response]);
@@ -267,7 +267,10 @@ function revealInFileManager(target: string): void {
         // On Windows 11, shell.showItemInFolder opens Explorer behind the app
         // window, which looks like nothing happened. Launching Explorer itself
         // brings the folder to the foreground and selects the file.
-        spawn("explorer.exe", [`/select,${target}`], { detached: true, stdio: "ignore" }).unref();
+        // Keep "/select," and the path as separate arguments: joining them makes
+        // Node wrap the whole argument in quotes when the path has spaces, which
+        // Explorer rejects by opening its default folder (Documents) instead.
+        spawn("explorer.exe", ["/select,", target], { detached: true, stdio: "ignore" }).unref();
         return;
     }
     shell.showItemInFolder(target);
@@ -317,16 +320,51 @@ ipcMain.handle("generate-recovery-key", async () => generateRecoveryKey());
 
 ipcMain.handle("validate-recovery-key", async (_, recoveryKey) => isValidRecoveryKey(recoveryKey));
 
+ipcMain.handle("select-recovery-key-file", async () => {
+    const result = await dialog.showOpenDialog({
+        properties: ["openFile"],
+        filters: [{ name: "Recovery Key", extensions: ["key"] }],
+    });
+    if (result.canceled || result.filePaths.length === 0) return null;
+
+    const filePath = result.filePaths[0];
+    let stats: fs.Stats;
+    try {
+        stats = fs.statSync(filePath);
+    } catch {
+        throw new Error("Could not read the Recovery Key file.");
+    }
+    if (!stats.isFile() || stats.size > 4096) {
+        throw new Error("That file does not contain a valid Recovery Key.");
+    }
+
+    let contents: string;
+    try {
+        contents = fs.readFileSync(filePath, "utf8").trim();
+    } catch {
+        throw new Error("Could not read the Recovery Key file.");
+    }
+    if (!isValidRecoveryKey(contents)) {
+        throw new Error("That file does not contain a valid Recovery Key.");
+    }
+    return contents;
+});
+
 ipcMain.handle("copy-recovery-key", async (_, recoveryKey) => {
     if (!isValidRecoveryKey(recoveryKey)) throw new Error("Invalid Recovery Key.");
     await rememberRecoveryKey(recoveryKey as string);
 });
 
-ipcMain.handle("save-recovery-key", async (_, recoveryKey) => {
+ipcMain.handle("save-recovery-key", async (_, recoveryKey, sourcePath) => {
     if (!isValidRecoveryKey(recoveryKey)) throw new Error("Invalid Recovery Key.");
+    const sourceName =
+        typeof sourcePath === "string" && sourcePath.length > 0
+            ? path.parse(path.basename(sourcePath)).name
+            : "";
+    const defaultName = `${sourceName || "prince"}-decrypt-key.key`;
     const result = await dialog.showSaveDialog({
         title: "Save Recovery Key",
-        defaultPath: path.join(app.getPath("documents"), "prince-recovery-key.key"),
+        defaultPath: path.join(app.getPath("documents"), defaultName),
         filters: [{ name: "Recovery Key", extensions: ["key"] }],
     });
     if (result.canceled || !result.filePath) return null;

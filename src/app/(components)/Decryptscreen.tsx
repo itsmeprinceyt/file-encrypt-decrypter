@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { DecryptScreenProps } from "../../types/Decryptscreen.type";
 import { toErrorMessage } from "../../lib/ipcError";
+import { fileName, folderName } from "../../lib/fileName";
+import PasswordInput from "./PasswordInput";
 
 const LEGACY_REENCRYPT_NOTICE = "This file uses the older format. Consider decrypting it and encrypting it again with a passphrase and a Recovery Key.";
 
@@ -37,6 +39,8 @@ export default function DecryptScreen({
     const canDecrypt = Boolean(inputPath && outputPath && !busy && (isLegacy ? password : password && recoveryKey && recoveryKeyValid === true));
     const fieldClass = "w-full rounded-lg border border-[#dce5e1] bg-white px-3.5 py-2.5 text-sm text-[#172321] placeholder:text-[#899590]";
     const quietButton = "w-full rounded-lg border border-[#dce5e1] bg-white px-4 py-2.5 text-left text-sm font-medium text-[#263b35] transition hover:bg-[#f6f9f7]";
+    const chosenFileName = fileName(inputPath);
+    const chosenFolderName = folderName(outputPath);
 
     const handleBrowse = async () => {
         setError("");
@@ -60,6 +64,18 @@ export default function DecryptScreen({
     const handleSaveAs = async () => {
         const selected = await window.electronAPI.saveFile(inputPath, "decrypt");
         if (selected) setOutputPath(selected);
+    };
+
+    const handleUploadRecoveryKey = async () => {
+        setError("");
+        try {
+            const key = await window.electronAPI.selectRecoveryKeyFile();
+            if (!key) return;
+            setRecoveryKey(key);
+            setRecoveryKeyValid(null);
+        } catch (err) {
+            setError(toErrorMessage(err));
+        }
     };
 
     const handleDecrypt = async () => {
@@ -95,18 +111,25 @@ export default function DecryptScreen({
                 <p className="mt-1 text-sm text-[#71807b]">Select a .prince file and enter its recovery details.</p>
             </div>
             <section className="space-y-2">
-                <button onClick={handleBrowse} className={quietButton}>Choose .prince file</button>
+                <button onClick={handleBrowse} className={quietButton} title={inputPath || undefined}>
+                    <span className="block truncate">{chosenFileName || "Choose .prince file"}</span>
+                </button>
                 <p className="break-all text-xs text-[#71807b]">{inputPath || "No file selected"}</p>
-                <button onClick={handleSaveAs} disabled={!inputPath} className={`${quietButton} disabled:cursor-not-allowed disabled:opacity-50`}>Choose save location</button>
+                <button onClick={handleSaveAs} disabled={!inputPath} className={`${quietButton} disabled:cursor-not-allowed disabled:opacity-50`} title={outputPath || undefined}>
+                    <span className="block truncate">{chosenFolderName || "Choose save location"}</span>
+                </button>
                 <p className="break-all text-xs text-[#71807b]">{outputPath || "Output location not selected"}</p>
             </section>
             {isLegacy && <p className="rounded-lg border border-[#eadfc9] bg-[#fbf7ef] px-3 py-2 text-xs leading-5 text-[#765b2b]">Older file format detected. Enter the original password used to encrypt this file.</p>}
             <section className="space-y-3">
                 <label className="block text-xs font-medium text-[#53645e]" htmlFor="decrypt-passphrase">{isLegacy ? "Original password" : "Passphrase"}</label>
-                <input id="decrypt-passphrase" type="password" autoComplete="current-password" placeholder={isLegacy ? "Enter original password" : "Enter passphrase"} className={fieldClass} value={password} onChange={e => setPassword(e.target.value)} />
+                <PasswordInput id="decrypt-passphrase" autoComplete="current-password" placeholder={isLegacy ? "Enter original password" : "Enter passphrase"} className={fieldClass} value={password} onChange={setPassword} />
                 {!isLegacy && <>
                     <label className="block text-xs font-medium text-[#53645e]" htmlFor="decrypt-recovery-key">Recovery key</label>
-                    <input id="decrypt-recovery-key" type="text" placeholder="XXXX-XXXX-…" spellCheck={false} autoComplete="off" className={`${fieldClass} font-mono text-xs`} value={recoveryKey} onChange={e => { setRecoveryKey(e.target.value); setRecoveryKeyValid(null); }} />
+                    <div className="flex gap-2">
+                        <input id="decrypt-recovery-key" type="text" placeholder="XXXX-XXXX-…" spellCheck={false} autoComplete="off" className={`${fieldClass} min-w-0 flex-1 font-mono text-xs`} value={recoveryKey} onChange={e => { setRecoveryKey(e.target.value); setRecoveryKeyValid(null); }} />
+                        <button type="button" onClick={handleUploadRecoveryKey} title="Upload a saved .key file" className="shrink-0 rounded-lg border border-[#dce5e1] bg-white px-3 py-2 text-xs font-medium text-[#263b35] transition hover:bg-[#f6f9f7]">Upload .key</button>
+                    </div>
                     {recoveryKey.length > 0 && recoveryKeyValid === false && <p className="text-xs text-[#9b443b]">Recovery key checksum does not match.</p>}
                     {recoveryKey.length > 0 && recoveryKeyValid === true && <p className="text-xs text-[#147d68]">Recovery key verified.</p>}
                 </>}

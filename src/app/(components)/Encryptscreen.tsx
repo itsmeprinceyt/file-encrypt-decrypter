@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { EncryptScreenProps } from "../../types/Encryptscreen.type";
 import { MIN_PASSPHRASE_LENGTH } from "../../constants";
 import { toErrorMessage } from "../../lib/ipcError";
+import { fileName, folderName } from "../../lib/fileName";
+import PasswordInput from "./PasswordInput";
 
 export default function EncryptScreen({
     inputPath, setInputPath, outputPath, setOutputPath, password, setPassword,
@@ -70,6 +72,8 @@ export default function EncryptScreen({
 
     const fieldClass = "w-full rounded-lg border border-[#dce5e1] bg-white px-3.5 py-2.5 text-sm text-[#172321] placeholder:text-[#899590]";
     const quietButton = "w-full rounded-lg border border-[#dce5e1] bg-white px-4 py-2.5 text-left text-sm font-medium text-[#263b35] transition hover:bg-[#f6f9f7]";
+    const chosenFileName = fileName(inputPath);
+    const chosenFolderName = folderName(outputPath);
 
     return (
         <main className="flex w-full max-w-lg flex-col gap-5 rounded-2xl border border-[#e2e9e6] bg-white p-6 shadow-[0_12px_40px_rgba(18,53,43,0.05)] sm:p-8">
@@ -79,20 +83,24 @@ export default function EncryptScreen({
             </div>
 
             <section className="space-y-2">
-                <button onClick={handleBrowse} className={quietButton}>Choose file</button>
+                <button onClick={handleBrowse} className={quietButton} title={inputPath || undefined}>
+                    <span className="block truncate">{chosenFileName || "Choose file"}</span>
+                </button>
                 <p className="break-all text-xs text-[#71807b]">{inputPath || "No file selected"}</p>
-                <button onClick={handleSaveAs} disabled={!inputPath} className={`${quietButton} disabled:cursor-not-allowed disabled:opacity-50`}>Choose save location</button>
+                <button onClick={handleSaveAs} disabled={!inputPath} className={`${quietButton} disabled:cursor-not-allowed disabled:opacity-50`} title={outputPath || undefined}>
+                    <span className="block truncate">{chosenFolderName || "Choose save location"}</span>
+                </button>
                 <p className="break-all text-xs text-[#71807b]">{outputPath || "Output location not selected"}</p>
             </section>
 
             <section className="space-y-3">
                 <label className="block text-xs font-medium text-[#53645e]" htmlFor="encrypt-passphrase">Passphrase</label>
-                <input id="encrypt-passphrase" type="password" autoComplete="new-password" placeholder="At least 12 characters" className={fieldClass} value={password} onChange={e => setPassword(e.target.value)} />
+                <PasswordInput id="encrypt-passphrase" autoComplete="new-password" placeholder="At least 12 characters" className={fieldClass} value={password} onChange={setPassword} />
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#edf1ef]">
                     <div className={`h-full transition-all duration-300 ${password.length >= 24 ? "bg-[#147d68]" : password.length >= 16 ? "bg-[#299780]" : password.length >= MIN_PASSPHRASE_LENGTH ? "bg-[#c58a2b]" : password.length ? "bg-[#c65a50]" : "bg-transparent"}`} style={{ width: `${Math.min(password.length / 24 * 100, 100)}%` }} />
                 </div>
                 <label className="block text-xs font-medium text-[#53645e]" htmlFor="confirm-passphrase">Confirm passphrase</label>
-                <input id="confirm-passphrase" type="password" autoComplete="new-password" placeholder="Enter it again" className={fieldClass} value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                <PasswordInput id="confirm-passphrase" autoComplete="new-password" placeholder="Enter it again" className={fieldClass} value={confirmPassword} onChange={setConfirmPassword} />
                 {password.length > 0 && password.length < MIN_PASSPHRASE_LENGTH && <p className="text-xs text-[#9b443b]">Use at least {MIN_PASSPHRASE_LENGTH} characters.</p>}
                 {confirmPassword.length > 0 && password !== confirmPassword && <p className="text-xs text-[#9b443b]">Passphrases do not match.</p>}
             </section>
@@ -114,7 +122,7 @@ export default function EncryptScreen({
                         </div>
                         <div className="flex gap-2">
                             <button onClick={async () => { try { await window.electronAPI.copyRecoveryKey(recoveryKey); setFeedback("Copied. Clipboard clears after 60 seconds."); setError(""); } catch (err) { setError(toErrorMessage(err)); } }} className="flex-1 rounded-lg border border-[#dce5e1] bg-white px-3 py-2 text-sm hover:bg-[#f6f9f7]">Copy key</button>
-                            <button onClick={async () => { try { const savedPath = await window.electronAPI.saveRecoveryKey(recoveryKey); if (savedPath) setFeedback("Recovery key saved to a .key file."); setError(""); } catch (err) { setError(toErrorMessage(err)); } }} className="flex-1 rounded-lg border border-[#dce5e1] bg-white px-3 py-2 text-sm hover:bg-[#f6f9f7]">Save .key file</button>
+                            <button onClick={async () => { try { const savedPath = await window.electronAPI.saveRecoveryKey(recoveryKey, inputPath); if (savedPath) setFeedback("Recovery key saved to a .key file."); setError(""); } catch (err) { setError(toErrorMessage(err)); } }} className="flex-1 rounded-lg border border-[#dce5e1] bg-white px-3 py-2 text-sm hover:bg-[#f6f9f7]">Save .key file</button>
                         </div>
                         <label className="flex cursor-pointer items-start gap-2 text-sm text-[#384a44]">
                             <input type="checkbox" checked={recoveryKeyAccepted} onChange={e => setRecoveryKeyAccepted(e.target.checked)} className="mt-0.5 accent-[#147d68]" />

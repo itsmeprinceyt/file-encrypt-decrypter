@@ -35,8 +35,9 @@ export interface ElectronAPI {
     inspectFile: (inputPath: string) => Promise<FileFormatInfo>;
     generateRecoveryKey: () => Promise<string>;
     validateRecoveryKey: (recoveryKey: string) => Promise<boolean>;
+    selectRecoveryKeyFile: () => Promise<string | null>;
     copyRecoveryKey: (recoveryKey: string) => Promise<void>;
-    saveRecoveryKey: (recoveryKey: string) => Promise<string | null>;
+    saveRecoveryKey: (recoveryKey: string, sourcePath?: string) => Promise<string | null>;
     encrypt: (payload: EncryptPayload) => Promise<void>;
     decrypt: (payload: DecryptPayload) => Promise<DecryptResult>;
     openExternal: (url: string) => void;
@@ -44,5 +45,5 @@ export interface ElectronAPI {
     onProgress: (callback: (info: ProgressInfo) => void) => () => void;
     onShortcutNavigate: (
         callback: (event: IpcRendererEvent, mode: "home" | "encrypt" | "decrypt" | "done") => void
-    ) => void;
+    ) => () => void;
 }
